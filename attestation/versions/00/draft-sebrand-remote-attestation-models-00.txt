@@ -4,11 +4,10 @@
 
 netconf                                                      S. Bhandari
 Internet-Draft                                                 B. Sulzen
-Intended status: Standards Track                                   Cisco
-Expires: December 17, 2018                                       E. Voit
-                                                           Cisco Systems
+Intended status: Standards Track                                 E. Voit
+Expires: December 17, 2018                                 Cisco Systems
                                                              H. Birkholz
-                  Fraunhofer Institute for Secure Information Technology
+                                                          Fraunhofer SIT
                                                            June 15, 2018
 
 
@@ -49,6 +48,7 @@ Copyright Notice
 
    Copyright (c) 2018 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
+
 
 
 
@@ -1219,7 +1219,7 @@ Appendix A.  An Appendix
 Authors' Addresses
 
    Shwetha Bhandari
-   Cisco Systems, Inc.
+   Cisco Systems
 
    Email: shwethab@cisco.com
 
@@ -1235,10 +1235,7 @@ Internet-Draft    Remote attestation of network device         June 2018
 
 
    Bill Sulzen
-   Cisco Systems, Inc.
-   7025-2 Kit Creek Road, RTP
-   North Carolina 27709-4987
-   USA
+   Cisco Systems
 
    Email: bsulzen@cisco.com
 
@@ -1251,6 +1248,9 @@ Internet-Draft    Remote attestation of network device         June 2018
 
    Henk Birkholz
    Fraunhofer Institute for Secure Information Technology
+   Rheinstrasse 75
+   Darmstadt  64295
+   Germany
 
    Email: henk.birkholz@sit.fraunhofer.de
 

@@ -31,25 +31,15 @@
     Attestation of Boot and Runtime Components of Network Equipment</title>
 
     <author fullname="Shwetha Bhandari" initials="S." surname="Bhandari">
-      <organization abbrev="Cisco">Cisco Systems, Inc.</organization>
-
+      <organization>Cisco Systems</organization>
       <address>
         <email>shwethab@cisco.com</email>
       </address>
     </author>
 
     <author fullname="Bill Sulzen" initials="B." surname="Sulzen">
-      <organization abbrev="Cisco">Cisco Systems, Inc.</organization>
-
+      <organization>Cisco Systems</organization>
       <address>
-        <postal>
-          <street>7025-2 Kit Creek Road, RTP</street>
-
-          <city>North Carolina 27709-4987</city>
-
-          <country>USA</country>
-        </postal>
-
         <email>bsulzen@cisco.com</email>
       </address>
     </author>
@@ -61,12 +51,15 @@
         <email>evoit@cisco.com</email>
       </address>
     </author>
-
-    <author fullname="Henk Birkholz" initials="H." surname="Birkholz">
-      <organization>Fraunhofer Institute for Secure Information
-      Technology</organization>
-
+   <author initials="H." surname="Birkholz" fullname="Henk Birkholz">
+      <organization abbrev="Fraunhofer SIT">Fraunhofer Institute for Secure Information Technology</organization>
       <address>
+        <postal>
+          <street>Rheinstrasse 75</street>
+          <city>Darmstadt</city>
+          <code>64295</code>
+          <country>Germany</country>
+        </postal>
         <email>henk.birkholz@sit.fraunhofer.de</email>
       </address>
     </author>
