@@ -1,0 +1,1288 @@
+
+
+
+
+netconf                                                      S. Bhandari
+Internet-Draft                                                 B. Sulzen
+Intended status: Standards Track                                   Cisco
+Expires: December 17, 2018                                       E. Voit
+                                                           Cisco Systems
+                                                             H. Birkholz
+                  Fraunhofer Institute for Secure Information Technology
+                                                           June 15, 2018
+
+
+ Model for Remote Attestation of Boot and Runtime Components of Network
+                               Equipment
+               draft-sebrand-remote-attestation-models-00
+
+Abstract
+
+   This document specifies YANG data models for remote assessment of a
+   network device.  The YANG modules defined here are useful to assess
+   trustworthiness of hardware and software of a network device.
+
+Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on December 17, 2018.
+
+Copyright Notice
+
+   Copyright (c) 2018 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 1]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (https://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+Table of Contents
+
+   1.  Problem Statement . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Trusted Computing . . . . . . . . . . . . . . . . . . . .   3
+     1.2.  Tree Diagram Notation . . . . . . . . . . . . . . . . . .   5
+   2.  The Model for Remote Attestation of Network Equipment . . . .   6
+     2.1.  Remote Attestation Flow . . . . . . . . . . . . . . . . .   6
+     2.2.  Overview of the model . . . . . . . . . . . . . . . . . .   8
+     2.3.  Example Usage . . . . . . . . . . . . . . . . . . . . . .  10
+     2.4.  Yang Module . . . . . . . . . . . . . . . . . . . . . . .  10
+   3.  Security Considerations . . . . . . . . . . . . . . . . . . .  21
+   4.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  21
+   5.  Security Considerations . . . . . . . . . . . . . . . . . . .  21
+   6.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .  21
+   7.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  21
+     7.1.  Normative References  . . . . . . . . . . . . . . . . . .  21
+     7.2.  Informative References  . . . . . . . . . . . . . . . . .  22
+   Appendix A.  An Appendix  . . . . . . . . . . . . . . . . . . . .  22
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  22
+
+1.  Problem Statement
+
+   Attacks on computing systems are on the rise.  Network infrastructure
+   is not exempt.  To protect network equipment implement:
+
+      Secure Boot, a mechanism for a platform owner to lock a platform
+      to only execute particular software.  Software components that do
+      not match the configuration digests will not be loaded or
+      executed.  This mechanism is particularly useful in preventing
+      malicious software that attempts to install itself in the boot
+      record (a bootkit) from successfully infecting a platform on
+      reboot.  A common standard for implementing Secure Boot is
+      described in [UEFI].
+
+      Hardware-based root of trust - The Trusted Computing Group(TCG)
+      [TCG] has created a standard for the design and usage of a secure
+      crypto-processor to address the storage of keys, general secrets,
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 2]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+      identities, and platform integrity measurements: the Trusted
+      Platform Module (TPM).
+
+   to ensure network equipment boot signed, genuine and unmodified
+   software, and that the hardware is not counterfeit.  These protection
+   mechanisms form a good first line of defense.  It is necessary to be
+   able to measure and report system integrity so that compromise can be
+   detected and so that operation of the secure boot capability can be
+   confirmed.  Attestation is the process of providing strong evidence
+   about the state of a device
+
+   This document defines a YANG [RFC6020] data module for remote
+   attestation as defined in [I-D.birkholz-attestation-terminology] of a
+   network device to gain visibility into :
+
+      Boot integrity: Includes firmware and software intergrity at all
+      the stages of booting the platform.
+
+      Run time integrity: Includes integrity of software components
+      executed by the platform.  For e.g.  Integrity Measurement
+      Architecture(IMA).
+
+   Attestation of network device when performed periodically, will allow
+   network operator to detect the alteration of the software and
+   hardware processing components, or the installation of malformed
+   components.  This document briefly analyzes Trusted Computing [TCG]
+   techniques available for measurements of software and hardware
+   components of a system at boot and run time.  The description of YANG
+   modules to report such measurements follow.
+
+1.1.  Trusted Computing
+
+   As summarized in [I-D.pastor-i2nsf-nsf-remote-attestation]: In a
+   nutshell, Trusted Computing (TC) aims at answering the following
+   question: "As a user or administrator, how can I have some assurance
+   that a computing system is behaving as it should?".  The major
+   enterprise level TC initiative is the TCG which has been established
+   for more than a decade.  The overall scheme proposed by TCG for using
+   Trusted Computing is based on a step-by-step extension of trust,
+   called a Chain of Trust.  It uses a transitive mechanism: if a user
+   can trust the first execution step and each step correctly attests
+   the next executable software for trustworthiness, then a user can
+   trust the system.
+
+   The TCG has been leading the industry in defining the functionality
+   required for strong attestation.  TCG Guidance for Securing Network
+   Equipment covers:
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 3]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   1.  System integrity measurements taken with code that can reasonably
+       be deemed to be uncompromised.  These are referred to as Roots of
+       Trust for Measurement (RTM).
+
+   2.  Once a measurement is taken, it cannot be compromised.  To
+       achieve this, measurements are placed into a Root of Trust for
+       Storage (RTS).
+
+   3.  The integrity report cannot be compromised.  A Root of Trust for
+       Reporting (RTR) can generate such a report.
+
+   A system that completely implements all three of these functions can
+   very reliably detect compromises and provide visibility into them.  A
+   measurement can take many forms.  If the object to be measured is
+   small enough, the measurement can be the object itself.  For example
+   if a small amount configuration data is being measured, the data
+   itself could be the measurement.  When measuring larger entities such
+   as software images, these tend to be quite large and are not
+   something that one would want to pass in an integrity report.
+   Therefore, most measurements tend to be hashes of the object itself.
+   Stronger hashes are of course preferred, and SHA512 or SHA256 should
+   be used where possible.
+
+   The best RTMs are immutable (or at least mutable only through
+   authenticated means), are implemented in hardware and cannot be
+   easily circumvented.  It protects the first set of instructions
+   executed by the host CPU.  This first set of instructions is referred
+   to as the Core Root of Trust for Measurement (CRTM).  The CRTM
+   measures the integrity of the platform's bootloader.  The CRTM is the
+   anchor upon which subsequent integrity measurements are based.
+   Effectively, during the loading of each piece of software that
+   follows, the integrity of each piece of software is measured and
+   stored inside a log that reflects the different boot stages.
+
+   A Root of Trust for Storage cannot be reset or tampered to modify
+   previously-recorded integrity measurements.  An RTS is hardware-
+   based, with the only way of resetting it being a platform power-cycle
+   or reset sequence.  There must also be no way to directly set the
+   value of recorded measurements.  When using a TPM as a root of trust,
+   measurements of the software stack are stored in special on-board
+   Platform Configuration Registers (PCRs) on a discrete TPM.  There are
+   normally a small number of PCRs that can be used for storing
+   measurements; however, it is not possible to directly write to a PCR.
+   Instead, measurements must be stored using a process called Extending
+   PCRs.  PCRs are used to maintain "rolling checksums" of all integrity
+   measurements.  Any attempt to modify integrity measurements would be
+   detected because the PCR values would not match.
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 4]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   When an integrity report is requested, its source, integrity and
+   liveliness must be ensured.  TPM implements a Root of Trust for
+   Reporting (RTR) that utilizes a requestor-supplied nonce and signs
+   the report with a platform-unique attestation key in a way that
+   assures the values signed are present in the RTS.  This document
+   defines YANG modules for generating attestation reports that includes
+   the event logs and PCR measurements for boot integrity.
+
+   Integrity Measurement Architecture (IMA) provides runtime
+   measurements and attestation.  IMA maintains a runtime measurement
+   list and, if anchored in a hardware Trusted Platform Module(TPM), an
+   aggregate integrity value over this list.  The benefit of anchoring
+   the aggregate integrity value in the TPM is that the measurement list
+   cannot be compromised by any software attack, without being
+   detectable.  Hence, on a trusted boot system, IMA can be used to
+   attest to the system's runtime integrity.  This document defines YANG
+   modules for generating IMA attestation reports that includes the
+   event logs and PCR measurements for boot integrity.  In addition
+   there can be a very large number of IMA measurements events hence a
+   the module defines a means to request and collect incrementally
+   observed events.
+
+1.2.  Tree Diagram Notation
+
+   A simplified graphical representation of the data models is used in
+   this document.  The meaning of the symbols in these diagrams is as
+   follows:
+
+   o  Brackets "[" and "]" enclose list keys.
+
+   o  Braces "{" and "}" enclose feature names, and indicate that the
+      named feature must be present for the subtree to be present.
+
+   o  Abbreviations before data node names: "rw" means configuration
+      (read-write) and "ro" state data (read-only).
+
+   o  Symbols after data node names: "?" means an optional node, "!"
+      means a presence container, and "*" denotes a list and leaf-list.
+
+   o  Parentheses enclose choice and case nodes, and case nodes are also
+      marked with a colon (":").
+
+   o  Ellipsis ("...") stands for contents of subtrees that are not
+      shown.
+
+
+
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 5]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+2.  The Model for Remote Attestation of Network Equipment
+
+   This section provides an overview of the remote attestation flow
+   followed by the YANG model to acheive it.
+
+2.1.  Remote Attestation Flow
+
+
+                 +--------1.Attestation Request (nonce)-----+
+                 |                                          |
+                 |                                          |
+                 |                                  +--------+-------+
+      +----------v-----------+                      |  +-----------+ |
+      |      Network         |                      |  |Attestation| |
+      |      Device          |    5. Attestation    |  |   Server  | |
+      |   +-----v-----+      +-----+ Response +-------->           | |
+      |   |Attestation|---+  |      (PCR Quotes,    |  +-----------+ |
+      | +->   Client  |   |  |       Integrity      |                |
+      | | |           <-+ |  |        Values)       |                |
+      | | +-----------+ | |  |                      |                |
+      |2.Event log      | |  |                      |  +-----------+ |
+      | |               |3.Server nonce             |                |
+      |+v----------+    | |  |                      |  |Reference  | |
+      || Platform  | 4.PCR Quote                    |  |Measurement| |
+      || Integrity |   PCR Values                   |  |Database   | |
+      || log       |   AIK Signature                |  +-----------+ |
+      |+-----------+    | |                         +----------------+
+      |                 | |  |
+      |        +----------v+ |
+      |        |    TPM    | |
+      |        |           | |
+      |        |    PCRs   | |
+      |        +-----------+ |
+      +----------------------+
+
+
+                     Figure 1: Remote Attestation Flow
+
+   The high-level flow of a network device integrity attestation process
+   is shown in Figure 1 and is as follows:
+
+   1.  An attestation server issues an attestation request to the
+       device.  The device attestation client receives and parses the
+       request.
+
+   2.  The attestation client retrieves the requested measurements from
+       the platform event log.
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 6]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   3.  The request, including the server nonce, is sent to TPM.
+
+   4.  The TPM generates a PCR quote which contains the PCR values, the
+       server nonce, and a signature across both of these.  The
+       signature is generated with an Attestation Key (AIK) that can be
+       used only to sign PCR quotes.
+
+   5.  Both the integrity measurements and the PCR quote are received by
+       the attestation server, which
+
+       1.  verifies the AIK signature
+
+       2.  verifies the integrity of the measurements with the PCR
+           values
+
+       3.  compares the integrity measurements against expected
+           reference values
+
+       If these three checks are successful, the network device is
+       deemed to be trustworthy.
+
+   Each of the components required to perform the above operations are
+   described in here.  These include: an attestation protocol, an
+   attestation server, a reference measurement database, a platform
+   event log, attestation credentials and a function to generate PCR
+   quote.
+
+   Attestation protocol:  A protocol must exist that enables the
+      attestation server and client to communicate.  This can be
+      [RFC6536], [RFC8040] protocols.  The server must be able to
+      indicate the type of the integrity report and a nonce.  The client
+      must be able to convey integrity measurements, the PCR quote, and
+      the certificate of the key used to sign the quote.
+
+   Attestation Server :  A server entity that can periodically or on
+      demand assess network equipments and compare it against reference
+      measurements.
+
+   Reference Measurement Database:  An Attestation Server will require a
+      reference measurement database that is a collection of reference
+      measurements from network equipments that are published by the
+      network equipment vendor or manufacturer or software provider.
+
+   Platform Event Log:  The platform retains a copy of every measured
+      integrity value in order to present these during attestation.
+
+   Attestation Keys:  Attestation keys reside in the TPM and are
+      restricted for use during attestation only.  Restricted keys
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 7]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+      cannot sign external data in the same way they sign PCR contents.
+      The end result is that external data crafted to look like PCR
+      contents cannot be signed with a restricted key without detection
+      at signature verification time.
+
+   PCR Quote:  TCG attestation is based on the output of the TPM Quote.
+      It consists of a structure containing the PCR values of interest
+      and a signature over that structure.  Boot integrity, hardware
+      integrity and IMA attestation have different sets of PCRs that are
+      extended during measurements.  Hence the each of the integrity
+      attestation reports contain different sets of PCRs included.
+
+2.2.  Overview of the model
+
+   module: ietf-network-device-remote-attestation
+
+    rpcs:
+       +---x get-certificate
+       |  +---w input
+       |  |  +---w nonce?                    binary
+       |  |  +---w certificate-identifier?   string
+       |  |  +---w location?                 string
+       |  +--ro output
+       |     +--ro system-certificates* [node-location]
+       |        +--ro node-location        string
+       |        +--ro nonce?               binary
+       |        +--ro certificates
+       |        |  +--ro certificate* [name]
+       |        |     +--ro name     string
+       |        |     +--ro value?   binary
+       |        +--ro signature_version?   uint32
+       |        +--ro signature?           binary
+       +---x attest-platform-config-registers
+       |  +---w input
+       |  |  +---w pcr-index*                            uint16
+       |  |  +---w nonce?                                binary
+       |  |  +---w attestation-certificate-identifier?   string
+       |  |  +---w location?                             string
+       |  +--ro output
+       |     +--ro platform-config-registers
+       |        +--ro nonce?       binary
+       |        +--ro node-data* [node-location]
+       |           +--ro node-location          string
+       |           +--ro up-time?               uint32
+       |           +--ro PCR* [index]
+       |           |  +--ro index    uint16
+       |           |  +--ro value*   uint8
+       |           +--ro pcr-quote?             binary
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 8]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+       |           +--ro pcr-quote-signature?   binary
+       +---x get-platform-boot-integrity-event-logs
+       |  +---w input
+       |  |  +---w location?             string
+       |  |  +---w start-event-number?   uint64
+       |  |  +---w end-event-number?     uint64
+       |  +--ro output
+       |     +--ro system-boot-integrity
+       |        +--ro node-data* [node-location]
+       |           +--ro node-location    string
+       |           +--ro up-time?         uint32
+       |           +--ro event_log* [event-number]
+       |              +--ro event-number    uint32
+       |              +--ro event-type?     uint32
+       |              +--ro pcr-index?      uint16
+       |              +--ro digest-list* [digest-hash-algorithm]
+       |              |  +--ro digest-hash-algorithm    enumeration
+       |              |  +--ro digest*                  binary
+       |              +--ro event-size?     uint32
+       |              +--ro event-data*     uint8
+       +---x get-platform-ima-event-logs
+          +---w input
+          |  +---w location?             string
+          |  +---w start-event-number?   uint64
+          |  +---w end-event-number?     uint64
+          +--ro output
+             +--ro system-ima
+                +--ro node-data* [node-location]
+                   +--ro node-location    string
+                   +--ro up-time?         uint32
+                   +--ro ima-template?    string
+                   +--ro ima-event-log* [event-number]
+                      +--ro event-number               uint64
+                      +--ro ima-template?              string
+                      +--ro filename-hint?             string
+                      +--ro filedata-hash?             binary
+                      +--ro template-hash-algorithm?   string
+                      +--ro template-hash?             binary
+                      +--ro pcr-index?                 uint16
+                      +--ro signature?                 binary
+
+     notifications:
+       +---n hardware-intergrity-failure
+       |  +--ro system-identifier?   string
+       +---n boot-integrity-failure
+       |  +--ro system-identifier?   string
+       +---n runtime-integrity-failure
+          +--ro system-identifier?   string
+
+
+
+Bhandari, et al.        Expires December 17, 2018               [Page 9]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+          +--ro filename-hint?       string
+          +--ro filedata-hash?       binary
+
+
+2.3.  Example Usage
+
+   <TBD>
+
+2.4.  Yang Module
+
+module ietf-network-device-remote-attestation {
+
+  namespace "urn:ietf:params:xml:ns:yang:\
+            ietf-network-device-remote-attestation";
+
+  prefix "rattest";
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  organization
+  "IETF NETCONF (Network Configuration) Working Group";
+
+  contact
+  "WG Web:   <http://tools.ietf.org/wg/netconf/>
+  WG List:  <mailto:netconf@ietf.org>
+  Author:   Shwetha Bhandari
+  <mailto:shwethab@cisco.com>";
+
+  description
+  "This module defines procedure for remote attestation
+  of a network platform''s security posture.
+  This is useful to assess trustworthiness of
+  hardware and software of a network device.
+
+  Copyright (c) 2018 IETF Trust and the persons identified
+  as authors of the code. All rights reserved.
+
+  Redistribution and use in source and binary forms, with
+  or without modification, is permitted pursuant to, and
+  subject to the license terms contained in, the Simplified
+  BSD License set forth in Section 4.c of the IETF Trust''s
+  Legal Provisions Relating to IETF Documents
+  (http://trustee.ietf.org/license-info).
+
+  This version of this YANG module is part of RFC VVVV; see
+  the RFC itself for full legal notices.";
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 10]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+  revision 2018-06-15 {
+    description "Initial revision.";
+    reference
+    "RFC VVVV: NETCONF Server and RESTCONF Server Operational
+    Models";
+  }
+
+
+   grouping PCR-DUMP {
+      description
+        "Defines TPM PCR register";
+      leaf index {
+         type uint16;
+         description
+     "PCR index";
+      }
+      leaf-list value {
+         type uint8;
+         min-elements 20;
+         max-elements 64;
+         description
+     "PCR register content";
+      }
+   }
+
+   grouping BOOT-EVENT-LOG {
+     description
+     "Defines an event log corresponding to
+      the event that extended the PCR";
+     leaf event-number {
+         type uint32;
+         description
+     "Unique event number of this event";
+     }
+     leaf event-type {
+         type uint32;
+         description
+     "log event type";
+     }
+     leaf pcr-index {
+        type uint16;
+        description
+    "Defines the PCR index that this event extended";
+     }
+     list digest-list {
+       key digest-hash-algorithm;
+       description "Hash of event data";
+       leaf digest-hash-algorithm {
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 11]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+         type enumeration {
+     enum SHA1 {
+       value 0;
+     }
+     enum SHA256 {
+       value 1;
+     }
+     enum SHA384 {
+       value 2;
+     }
+     enum SHA512 {
+       value 3;
+     }
+         }
+         description
+     "Algorithm for this digest";
+       }
+       leaf-list digest {
+     type binary;
+     description
+       "The hash of the event data";
+       }
+     }
+      leaf event-size {
+         type uint32;
+         description
+     "Size of the event data";
+      }
+      leaf-list event-data {
+    type uint8;
+    description
+      "the event data size determined by event-size";
+      }
+   }
+
+ grouping IMA-EVENT {
+   description
+     "Defines an hash log extend event for IMA measurements";
+   leaf event-number {
+       type uint64;
+       description
+  "Unique number for this event for sequencing";
+     }
+   leaf ima-template {
+     type string;
+     description
+     "Name of the template used for event logs
+     for e.g. ima, ima-ng";
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 12]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   }
+   leaf filename-hint {
+       type string;
+       description
+   "File that was measured";
+   }
+   leaf filedata-hash {
+       type binary;
+       description
+    "Hash of filedata";
+   }
+   leaf template-hash-algorithm {
+  type string;
+  description
+   "Algorithm used for template-hash";
+   }
+   leaf template-hash {
+  type binary;
+  description
+   " hash(filedata-hash, filename-hint)";
+   }
+   leaf pcr-index {
+      type uint16;
+      description
+  "Defines the PCR index that this event extended";
+   }
+   leaf signature {
+     type binary;
+     description
+     "The file signature";
+   }
+ }
+
+ rpc get-certificate {
+    description
+    "Query certificate.
+    Returns certificate chain
+    associated with the queried certificate.
+    An optional nonce can be provided, that is then used to
+    return a signature over the certificate contents returned.";
+
+    input {
+      leaf nonce {
+        type binary {
+            length "0..64";
+        }
+        description
+        "Nonce to be included in the attested output
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 13]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+        to prevent replay attacks";
+      }
+      leaf certificate-identifier {
+        type string;
+        description
+        "Certificate identifier";
+      }
+      leaf location {
+        type string;
+        description
+        "In a distributed system get the data from a specific node
+        identified by the location. If this field is not specified
+        data associated with each node forming the system will be
+        returned.";
+      }
+    }
+      output {
+        list system-certificates {
+          key node-location;
+          description
+          "Certificate data of a node in a distributed system
+          identified by the location";
+          leaf node-location {
+            type string;
+            description
+            "Location of the node in the distributed system";
+          }
+          leaf nonce {
+            type binary {
+                length "0..64";
+            }
+            description
+            "Nonce used for this output";
+          }
+          container certificates {
+            description
+            "Certificates chain associated with the certificate
+            being queried";
+            list certificate {
+              key name;
+              description
+              "A X.509 certificate";
+              leaf name {
+                type string;
+                description
+                "A node-unique certificate identifier";
+              }
+              leaf value {
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 14]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+                type binary;
+                description
+                "Certificate content in DER format.";
+              }
+            }
+          }
+          leaf signature_version {
+            type uint32;
+            description
+            "Signature version designates
+            the format of the signed data.";
+          }
+          leaf signature {
+            type binary;
+            description
+            "The optional RSA or ECDSA signature across
+            the certificates,the signature version and
+            the input nonce.Signed data format is:
+            Nonce || UINT32 signature version ||
+            [Certificate included in the response in DER format].";
+          }
+        }
+
+        }
+
+        }
+
+
+        rpc attest-platform-config-registers {
+          description
+          "Attest Platform Configuration Register(PCRs)";
+          input {
+            leaf-list pcr-index {
+               type uint16;
+               min-elements 1;
+               description
+           "PCR register indices to be included in the attested output";
+            }
+            leaf nonce {
+              type binary {
+                  length "0..64";
+              }
+              description
+              "Nonce to be included in the attested output
+              to prevent replay attacks";
+            }
+            leaf attestation-certificate-identifier {
+              type string;
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 15]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+              description
+              "Identifier of the certificate to be used for
+              attestation";
+            }
+            leaf location {
+              type string;
+              description
+              "In a distributed system get the data from a specific node
+              identified by the location. If this field is not specified
+              data associated with each node forming the system will be
+              returned.";
+            }
+          }
+          output {
+            container platform-config-registers {
+              description "Attested Platform Config Register values";
+              leaf nonce {
+                type binary {
+                    length "0..64";
+                }
+                description
+                "Nonce used for this output";
+              }
+              list node-data {
+                key node-location;
+                description
+                "Certificate data of a node in a distributed system
+                identified by the location";
+                leaf node-location {
+                  type string;
+                  description
+                  "Location of the node in the distributed system";
+                }
+                leaf up-time {
+                  type uint32;
+                  description
+                  "Uptime in seconds of this node reporting its data";
+                }
+                list PCR {
+                  key index;
+                  description
+                  "List of requested PCR contents";
+                  uses PCR-DUMP;
+                }
+                leaf pcr-quote {
+                  type binary;
+                  description
+                  "TPM PCR Quote";
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 16]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+                }
+                leaf pcr-quote-signature {
+                    type binary;
+                    description
+                    "PCR Quote signature using TPM-held
+                    ECC or RSA restricted key";
+                  }
+              }
+            }
+          }
+        }
+
+            rpc get-platform-boot-integrity-event-logs {
+              description
+              "Get platform's boot integrity";
+              input {
+                leaf location {
+                  type string;
+                  description
+                  "In a distributed system get the data from a specific
+                  node identified by the location.
+                  If this field is not specified data associated
+                  with each node forming the system will be
+                  returned.";
+                }
+                leaf start-event-number {
+                  type uint64;
+                  description
+                  "To filter event logs to be retrieved.
+                  - If set only events with sequence number
+                  greater than that specified in this argument
+                  will be returned.";
+                }
+                leaf end-event-number {
+                  type uint64;
+                  must "current()  >= ../start-event-number" {
+                    description
+                    "end-event-number must be used with
+                    and be greater than or
+                    equal to <start-event-number>";
+                   }
+                  description
+                  "To control event logs to be retrieved.
+                  - If set only events with sequence number
+                  in the range of start-event-number to end-event-number
+                  will be returned.";
+                }
+              }
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 17]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+              output {
+                container system-boot-integrity {
+                  description "Boot integrity event logs";
+                  list node-data {
+                    key node-location;
+                    description
+                    "Boot integrity event logs of a node
+                    in a distributed system identified
+                    by the location";
+                    leaf node-location {
+                      type string;
+                      description
+                      "Location of the node in the distributed system";
+                    }
+                    leaf up-time {
+                      type uint32;
+                      description
+                      "Uptime in seconds of this node
+                      reporting its data";
+                    }
+                    list event_log {
+                      key event-number;
+                      description
+                      "Ordered list of TCG described event log
+                      that extended the PCRs in the order they
+                      were logged";
+                      uses BOOT-EVENT-LOG;
+                    }
+                  }
+                }
+              }
+            }
+
+            rpc get-platform-ima-event-logs {
+              description
+              "Get platform IMA event logs";
+              input {
+                leaf location {
+                  type string;
+                  description
+                  "In a distributed system get the data
+                   from a specific node identified
+                   by the location. If this field is not
+                   specified data associated with each node
+                   forming the system will be returned.";
+                }
+                leaf start-event-number {
+                  type uint64;
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 18]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+                  description
+                  "To filter event logs to be retrieved.
+                  - If set only events with sequence number
+                  greater than that specified in this argument
+                  will be returned.";
+                }
+                leaf end-event-number {
+                  type uint64;
+                  must "current()  >= ../start-event-number" {
+                    description
+                    "end-event-number must be used with
+                    and be greater than or
+                    equal to <start-event-number>";
+                   }
+                  description
+                  "To control event logs to be retrieved.
+                  - If set only events with sequence number
+                  in the range of start-event-number to
+                  end-event-number will be returned.";
+                }
+              }
+              output {
+                container system-ima {
+                description
+                "Runtime integrity measurement event logs";
+                  list node-data {
+                    key node-location;
+                    description
+                    "IMA event logs of a node in a distributed system
+                    identified by the location";
+                    leaf node-location {
+                      type string;
+                      description
+                      "Location of the node in the distributed system";
+                    }
+                    leaf up-time {
+                      type uint32;
+                      description
+                      "Uptime in seconds of this node
+                      reporting its data";
+                    }
+                    leaf ima-template {
+                      type string;
+                      description
+                      "Name of the template used for event logs
+                      for e.g. ima, ima-ng";
+                    }
+                    list ima-event-log {
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 19]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+                      key event-number;
+                      description
+                      "Ordered list of ima event logs by event-number";
+                      uses IMA-EVENT;
+                    }
+                  }
+                }
+              }
+              }
+                notification hardware-intergrity-failure {
+                  description
+                  "Notifies failure of hardware integrity check";
+                  leaf system-identifier {
+                    type string;
+                    description
+                    "System identifier";
+                  }
+                }
+
+                notification boot-integrity-failure {
+                  description
+                  "Notifies failure of boot integrity checks at
+                  any stage of boot";
+                  leaf system-identifier {
+                    type string;
+                    description
+                    "System identifier";
+                  }
+                }
+                notification runtime-integrity-failure {
+                  description
+                  "Notifies failure of runtime integrity checks";
+                  leaf system-identifier {
+                    type string;
+                    description
+                    "System identifier";
+                  }
+                  leaf filename-hint {
+                    type string;
+                    description
+                    "File that was appraised and
+                     failed integrity checks";
+                  }
+                  leaf filedata-hash {
+                    type binary;
+                    description
+                    "Hash of filedata that failed IMA appraisal";
+                  }
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 20]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+                }
+
+  }
+
+
+
+3.  Security Considerations
+
+4.  IANA Considerations
+
+   This document makes no request of IANA.
+
+   Note to RFC Editor: this section may be removed on publication as an
+   RFC.
+
+5.  Security Considerations
+
+6.  Acknowledgements
+
+7.  References
+
+7.1.  Normative References
+
+   [I-D.birkholz-attestation-terminology]
+              Birkholz, H., Wiseman, M., and H. Tschofenig, "Reference
+              Terminology for Remote Attestation Procedures", draft-
+              birkholz-attestation-terminology-01 (work in progress),
+              January 2018.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC6020]  Bjorklund, M., Ed., "YANG - A Data Modeling Language for
+              the Network Configuration Protocol (NETCONF)", RFC 6020,
+              DOI 10.17487/RFC6020, October 2010,
+              <https://www.rfc-editor.org/info/rfc6020>.
+
+   [TCG]      "Trusted Computing Group (TCG)",
+              <https://www.trustedcomputinggroup.org/>.
+
+   [TCGGSS]   "TCG Generic Server Specification, Version 1.0",
+              <http://www.trustedcomputinggroup.org/>.
+
+   [TCGIRSS]  "Infrastructure Work Group Integrity Report Schema
+              Specification, Version 1.0",
+              <https://www.trustedcomputinggroup.org/>.
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 21]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+7.2.  Informative References
+
+   [I-D.ietf-netconf-keystore]
+              Watsen, K., "YANG Data Model for a Centralized Keystore
+              Mechanism", draft-ietf-netconf-keystore-05 (work in
+              progress), June 2018.
+
+   [I-D.ietf-netconf-yang-push]
+              Clemm, A., Voit, E., Prieto, A., Tripathy, A., Nilsen-
+              Nygaard, E., Bierman, A., and B. Lengyel, "YANG Datastore
+              Subscription", draft-ietf-netconf-yang-push-16 (work in
+              progress), May 2018.
+
+   [I-D.pastor-i2nsf-nsf-remote-attestation]
+              Pastor, A., Lopez, D., and A. Shaw, "Remote Attestation
+              Procedures for Network Security Functions (NSFs) through
+              the I2NSF Security Controller", draft-pastor-i2nsf-nsf-
+              remote-attestation-03 (work in progress), March 2018.
+
+   [RFC6536]  Bierman, A. and M. Bjorklund, "Network Configuration
+              Protocol (NETCONF) Access Control Model", RFC 6536,
+              DOI 10.17487/RFC6536, March 2012,
+              <https://www.rfc-editor.org/info/rfc6536>.
+
+   [RFC8040]  Bierman, A., Bjorklund, M., and K. Watsen, "RESTCONF
+              Protocol", RFC 8040, DOI 10.17487/RFC8040, January 2017,
+              <https://www.rfc-editor.org/info/rfc8040>.
+
+   [Std-802.1AR-2009]
+              IEEE SA-Standards Board, "IEEE Standard for Local and
+              metropolitan area networks - Secure Device Identity",
+              December 2009, <http://standards.ieee.org/findstds/
+              standard/802.1AR-2009.html>.
+
+   [UEFI]     "UEFI Specification Version 2.2 (Errata D), Tech. Rep.".
+
+Appendix A.  An Appendix
+
+Authors' Addresses
+
+   Shwetha Bhandari
+   Cisco Systems, Inc.
+
+   Email: shwethab@cisco.com
+
+
+
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 22]
+
+Internet-Draft    Remote attestation of network device         June 2018
+
+
+   Bill Sulzen
+   Cisco Systems, Inc.
+   7025-2 Kit Creek Road, RTP
+   North Carolina 27709-4987
+   USA
+
+   Email: bsulzen@cisco.com
+
+
+   Eric Voit
+   Cisco Systems
+
+   Email: evoit@cisco.com
+
+
+   Henk Birkholz
+   Fraunhofer Institute for Secure Information Technology
+
+   Email: henk.birkholz@sit.fraunhofer.de
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Bhandari, et al.        Expires December 17, 2018              [Page 23]
